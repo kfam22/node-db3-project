@@ -1,4 +1,4 @@
-
+const db = require('../../data/db-config');
 
 function find() { // EXERCISE A
   /*
@@ -14,12 +14,22 @@ function find() { // EXERCISE A
       GROUP BY sc.scheme_id
       ORDER BY sc.scheme_id ASC;
 
+      translated into knex
+      1.select schenes as sc
+      2.left join steps as st
+
     2A- When you have a grasp on the query go ahead and build it in Knex.
     Return from this function the resulting dataset.
   */
+return db('schemes as sc')
+.leftJoin('steps as st', 'sc.scheme_id', 'st.scheme_id')
+.select('sc.*')
+.count('st.step_id as number_of_steps')
+.groupBy('sc.scheme_id')
+.orderBy('sc.scheme_id')
 }
 
-function findById(scheme_id) { // EXERCISE B
+async function findById(scheme_id) { // EXERCISE B
   /*
     1B- Study the SQL query below running it in SQLite Studio against `data/schemes.db3`:
 
@@ -31,6 +41,7 @@ function findById(scheme_id) { // EXERCISE B
           ON sc.scheme_id = st.scheme_id
       WHERE sc.scheme_id = 1
       ORDER BY st.step_number ASC;
+
 
     2B- When you have a grasp on the query go ahead and build it in Knex
     making it parametric: instead of a literal `1` you should use `scheme_id`.
@@ -84,7 +95,40 @@ function findById(scheme_id) { // EXERCISE B
         "scheme_name": "Have Fun!",
         "steps": []
       }
+
+       SELECT
+          sc.scheme_name,
+          st.*
+      FROM schemes as sc
+      LEFT JOIN steps as st
+          ON sc.scheme_id = st.scheme_id
+      WHERE sc.scheme_id = 1
+      ORDER BY st.step_number ASC;
   */
+      const steps = await db('schemes as sc')
+      .leftJoin('steps as st', 'sc.scheme_id', 'st.scheme_id')
+      .select('sc.scheme_name', 'st.*', 'sc.scheme_id')
+      .where('sc.scheme_id', scheme_id)
+      .orderBy('st.step_number')
+      console.log(steps)
+
+      const formatted = {
+        scheme_id: steps[0].scheme_id,
+        scheme_name: steps[0].scheme_name,
+        steps: []
+      }
+
+      steps.forEach(step => {
+        if(step.step_id){
+          formatted.steps.push({
+            step_id: step.step_id,
+            step_number: step.step_number,
+            instructions: step.instructions
+          })
+        }
+      })
+
+      return formatted
 }
 
 function findSteps(scheme_id) { // EXERCISE C
